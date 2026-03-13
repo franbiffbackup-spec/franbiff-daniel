@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Dashboard de Vendas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --cor-fundo: #111827;
+            --cor-card: #1F2937;
+            --cor-borda: #374151;
+            --cor-acento: #06B6D4;
+        }
+        
+        body {
+            background: var(--cor-fundo);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            background: var(--cor-card);
+            border: 1px solid var(--cor-borda);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo img {
+            height: 60px;
+        }
+        
+        .form-control {
+            background: #111827;
+            border: 1px solid var(--cor-borda);
+            color: #fff;
+            padding: 14px 16px;
+            border-radius: 10px;
+        }
+        
+        .form-control:focus {
+            background: #111827;
+            border-color: var(--cor-acento);
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
+            border: none;
+            color: #fff;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3);
+        }
+        
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .alert-erro {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="login-logo">
+            <img src="/logo.png" alt="Logo" onerror="this.style.display='none'">
+            <h4 class="text-white mt-3 mb-1">Dashboard de Vendas</h4>
+            <p class="text-muted small">Acesso restrito</p>
+        </div>
+        
+        <div class="alert-erro" id="erro-msg"></div>
+        
+        <form id="login-form" onsubmit="fazerLogin(event)">
+            <div class="mb-3">
+                <label class="form-label text-muted small">Usuário</label>
+                <input type="text" class="form-control" id="usuario" placeholder="Digite seu usuário" required autofocus autocomplete="username">
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label text-muted small">Senha</label>
+                <input type="password" class="form-control" id="senha" placeholder="Digite sua senha" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login" id="btn-entrar">
+                <span class="spinner" id="spinner"></span>
+                <span id="btn-texto">Entrar</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Função de login
+        async function fazerLogin(event) {
+            event.preventDefault();
+            
+            const usuario = document.getElementById('usuario').value.trim();
+            const senha = document.getElementById('senha').value;
+            const btn = document.getElementById('btn-entrar');
+            const spinner = document.getElementById('spinner');
+            const btnTexto = document.getElementById('btn-texto');
+            const erroMsg = document.getElementById('erro-msg');
+            
+            // Mostrar loading
+            btn.disabled = true;
+            spinner.style.display = 'inline-block';
+            btnTexto.textContent = 'Entrando...';
+            erroMsg.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ usuario, senha })
+                });
+                
+                const data = await response.json();
+                
+                if (data.sucesso) {
+                    // Aguardar um pouco para garantir que a sessão foi salva
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Redirecionar
+                    window.location.href = '/';
+                } else {
+                    throw new Error(data.erro || 'Usuário ou senha inválidos');
+                }
+                
+            } catch (err) {
+                erroMsg.textContent = err.message || 'Erro ao fazer login';
+                erroMsg.style.display = 'block';
+                
+                // Resetar botão
+                btn.disabled = false;
+                spinner.style.display = 'none';
+                btnTexto.textContent = 'Entrar';
+            }
+        }
+    </script>
+
+</body>
+</html>

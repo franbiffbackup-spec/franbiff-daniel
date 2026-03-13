@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Vendas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+        --cor-fundo: #111827;
+        --cor-card: #1F2937;
+        --cor-borda: #374151;
+        --cor-texto-principal: #F9FAFB;
+        --cor-texto-secundario: #9CA3AF;
+        --cor-texto-muted: #6B7280;
+        --cor-acento-principal: #06B6D4;
+        --cor-acento-secundario: #3B82F6;
+        --gradiente-acento: linear-gradient(135deg, var(--cor-acento-principal) 0%, var(--cor-acento-secundario) 100%);
+    }
+
+    body { 
+        background-color: var(--cor-fundo); 
+        color: var(--cor-texto-principal);
+        font-family: 'Inter', sans-serif;
+        padding: 0 !important;
+        overflow-x: hidden;
+    }
+    .card { 
+        background-color: var(--cor-card); 
+        border: 1px solid var(--cor-borda);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px 0 rgba(0,0,0,0.2); 
+    }
+    .nav-tabs {
+        border-bottom-color: var(--cor-borda);
+    }
+    .nav-tabs .nav-link { 
+        color: var(--cor-texto-secundario); 
+        cursor: pointer;
+        border: none;
+        border-bottom: 2px solid transparent;
+    }
+    .nav-tabs .nav-link.active { 
+        background-color: transparent; 
+        color: var(--cor-acento-principal); 
+        border-bottom-color: var(--cor-acento-principal);
+    }
+    .chart-container { 
+        position: relative; 
+        height: 50vh; 
+        width: 100%; 
+        margin-top: 20px;
+    }
+    
+    .filter-bar { 
+        background-color: var(--cor-card); 
+        border-radius: 12px; 
+        padding: 16px 20px; 
+        margin-bottom: 20px; 
+        border: 1px solid var(--cor-borda);
+    }
+    .form-control, .form-select { 
+        background-color: var(--cor-fundo); 
+        border: 1px solid var(--cor-borda); 
+        color: var(--cor-texto-principal); 
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+    .form-control:focus, .form-select:focus { 
+        background-color: var(--cor-fundo); 
+        color: var(--cor-texto-principal); 
+        border-color: var(--cor-acento-principal); 
+        box-shadow: 0 0 0 0.25rem rgba(6, 182, 212, 0.25); 
+    }
+    
+    .periodo-botoes-compacto {
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 6px;
+        align-items: center;
+    }
+    .btn-periodo {
+        background: transparent;
+        border: 1px solid var(--cor-borda);
+        color: var(--cor-texto-secundario);
+        padding: 6px 12px; 
+        border-radius: 16px; 
+        font-size: 0.75rem;
+        font-weight: 500; 
+        transition: all 0.2s ease; 
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-periodo:hover {
+        color: var(--cor-texto-principal);
+        border-color: var(--cor-acento-principal);
+        background: rgba(6, 182, 212, 0.05);
+    }
+    .btn-periodo.ativo {
+        background: var(--gradiente-acento);
+        border-color: transparent;
+        color: #fff;
+    }
+    .btn-periodo.btn-data {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-style: dashed;
+    }
+    .btn-periodo.btn-data:hover {
+        border-style: solid;
+    }
+    
+    .ano-slider-compacto {
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        margin-top: 10px;
+        padding: 8px 12px;
+        background: var(--cor-fundo); 
+        border-radius: 8px; 
+        border: 1px solid var(--cor-borda);
+    }
+    .ano-slider {
+        flex: 1; 
+        -webkit-appearance: none; 
+        height: 4px; 
+        border-radius: 2px;
+        background: var(--cor-borda); 
+        outline: none;
+    }
+    .ano-slider::-webkit-slider-thumb {
+        -webkit-appearance: none; 
+        appearance: none; 
+        width: 14px; 
+        height: 14px;
+        border-radius: 50%; 
+        background: var(--cor-acento-principal); 
+        cursor: pointer;
+    }
+    .ano-slider::-moz-range-thumb {
+        width: 14px; 
+        height: 14px; 
+        border-radius: 50%;
+        background: var(--cor-acento-principal); 
+        cursor: pointer; 
+        border: none;
+    }
+    .ano-display {
+        min-width: 50px; 
+        text-align: center; 
+        font-weight: 600;
+        color: var(--cor-acento-principal);
+        font-size: 0.9rem;
+    }
+    
+    .flatpickr-calendar {
+        background: var(--cor-card); border: 1px solid var(--cor-borda);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .flatpickr-month { color: var(--cor-texto-principal); }
+    .flatpickr-weekday { color: var(--cor-texto-muted); }
+    .flatpickr-day { color: var(--cor-texto-principal); }
+    .flatpickr-day:hover { background: var(--cor-acento-principal); color: #fff; }
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+        background: var(--cor-acento-principal); border-color: var(--cor-acento-principal);
+    }
+    .flatpickr-day.inRange {
+        background: rgba(6, 182, 212, 0.15);
+        border-color: transparent; box-shadow: none;
+    }
+    .flatpickr-seletores-rapidos select { transition: all 0.2s ease; }
+    .flatpickr-seletores-rapidos select:hover { border-color: var(--cor-acento-principal) !important; }
+    .flatpickr-seletores-rapidos select:focus {
+        outline: none; border-color: var(--cor-acento-principal) !important;
+        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+    }
+    .flatpickr-seletores-rapidos button { background: var(--gradiente-acento); }
+    
+    .rota-lista { max-height: 400px; overflow-y: auto; }
+    .rota-lista::-webkit-scrollbar { width: 6px; }
+    .rota-lista::-webkit-scrollbar-track { background: var(--cor-fundo); border-radius: 3px; }
+    .rota-lista::-webkit-scrollbar-thumb { background: var(--cor-borda); border-radius: 3px; }
+    .rota-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .rota-item:last-child { border-bottom: none; }
+    .rota-cor { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; }
+    .rota-nome-lista { font-size: 0.8rem; color: var(--cor-texto-secundario); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rota-valor-lista { font-size: 0.85rem; font-weight: 600; color: var(--cor-texto-principal); text-align: right; }
+    .rota-percentual-lista { font-size: 0.7rem; color: var(--cor-texto-muted); margin-left: 6px; }
+    
+    .header-fixo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: var(--cor-fundo);
+        padding: 16px 20px 0 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .header-fixo::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cor-borda), transparent);
+    }
+    
+    .conteudo-scrollavel {
+        padding: 20px;
+        padding-top: 280px;
+    }
+    
+    @media (max-width: 992px) {
+        .conteudo-scrollavel {
+            padding-top: 320px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .conteudo-scrollavel {
+            padding-top: 380px;
+        }
+    }
+</style>    
+</head>
+<body>
+
+    <!-- HEADER FIXO -->
+    <div class="header-fixo">
+        <!-- Header com logo e usuário -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <h2 class="mb-0" style="font-size: 1.5rem;">Acompanhamento de Vendas</h2>
+                <span class="badge bg-success" id="user-badge" style="font-size: 0.7rem;">
+                    ● <span id="username">Carregando...</span>
+                </span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <img src="/logo.png" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+                <button class="btn btn-sm btn-outline-danger" onclick="fazerLogout()" title="Sair">
+                    🚪 Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Abas -->
+        <ul class="nav nav-tabs mb-3" id="minhasAbas" role="tablist" style="border-bottom: none;">
+            <li class="nav-item">
+                <button class="nav-link active d-flex align-items-center gap-2" data-bs-toggle="tab" type="button" onclick="carregarAba('venda-geral')" style="
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%);
+                    border: 2px solid var(--cor-acento-principal);
+                    border-radius: 10px;
+                    padding: 10px 18px;
+                    font-weight: 600;
+                    font-size: 0.85rem;
+                    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+                    margin-right: 8px;
+                ">
+                    <span style="font-size: 1.1rem;">📊</span>
+                    <span>Venda Geral</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link d-flex align-items-center gap-2" data-bs-toggle="tab" type="button" onclick="carregarAba('franbiff')" style="border-radius: 10px; padding: 10px 18px; font-size: 0.85rem; margin-right: 8px;">
+                    <img src="/logoFat.png" alt="Franbiff" style="height: 18px; width: auto; object-fit: contain;">
+                    <span>Fatiados Franbiff</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link d-flex align-items-center gap-2" data-bs-toggle="tab" type="button" onclick="carregarAba('prats')" style="border-radius: 10px; padding: 10px 18px; font-size: 0.85rem;">
+                    <img src="/logoPrats.png" alt="Prats" style="height: 18px; width: auto; object-fit: contain;">
+                    <span>Suco Prats</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Barra de filtros minimalista -->
+        <div class="filter-bar" style="margin-bottom: 0; padding: 12px 16px;">
+            <div class="row align-items-center g-2">
+                <!-- Botões de período rápido (compactos) -->
+                <div class="col-lg-7">
+                    <div class="periodo-botoes-compacto">
+                        <button class="btn-periodo ativo" onclick="selecionarPeriodoRapido('este-mes')">Este Mês</button>
+                        <button class="btn-periodo" onclick="selecionarPeriodoRapido('mes-anterior')">Mês Ant.</button>
+                        <button class="btn-periodo" onclick="selecionarPeriodoRapido('ultimos-3-meses')">3 Meses</button>
+                        <button class="btn-periodo" onclick="selecionarPeriodoRapido('este-ano')">2024</button>
+                        <button class="btn-periodo" onclick="selecionarPeriodoRapido('ano-anterior')">2023</button>
+                        <button class="btn-periodo" onclick="selecionarPeriodoRapido('tudo')">Tudo</button>
+                        
+                        <!-- Seletor de data minimalista -->
+                        <button class="btn-periodo btn-data" onclick="abrirDatePicker()" id="btn-data-range">
+                            <span>📅</span>
+                            <span id="texto-data-range">Personalizado</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Slider de ano (aparece quando relevante) -->
+                    <div class="ano-slider-compacto" id="ano-slider-container" style="display: none; margin-top: 8px;">
+                        <input type="range" class="ano-slider" id="ano-slider" min="2020" max="2026" value="2024" onchange="atualizarAnoSlider(this.value)">
+                        <span class="ano-display" id="ano-display">2024</span>
+                    </div>
+                </div>
+
+                <!-- Filtro de rota -->
+                <div class="col-lg-5">
+                    <div class="d-flex gap-2">
+                        <select id="filtro-rota" class="form-select" onchange="aplicarFiltros()" style="padding: 8px 12px; font-size: 0.8rem;">
+                            <option value="TODAS">📍 Todas as Rotas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input escondido do date picker -->
+            <input type="text" id="date-range-picker" style="position: absolute; opacity: 0; pointer-events: none;">
+        </div>
+    </div>
+
+    <!-- CONTEÚDO SCROLLÁVEL -->
+    <div class="conteudo-scrollavel">
+        <div id="conteudo">
+            <!-- Cards de resumo -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card p-3 text-center">
+                        <h5 class="text-muted text-uppercase small fw-bold">Total Vendas (Filtrado)</h5>
+                        <h2 id="card-vendas" class="text-primary mb-0">Carregando...</h2>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-3 text-center">
+                        <h5 class="text-muted text-uppercase small fw-bold">Média Vendas / Mês (Filtrado)</h5>
+                        <h2 id="card-media-vendas" class="text-info mb-0">Carregando...</h2>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-3 text-center">
+                        <h5 class="text-muted text-uppercase small fw-bold">Média Positivações / Mês (Filtrado)</h5>
+                        <h2 id="card-positivacoes" class="text-success mb-0">Carregando...</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de evolução mensal -->
+            <div class="card p-4">
+                <h5 class="card-title text-uppercase text-muted mb-0">Evolução Mensal</h5>
+                <div class="chart-container">
+                    <canvas id="meuGrafico"></canvas>
+                </div>
+            </div>
+
+            <!-- Comparativo ano a ano -->
+            <div class="card p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title text-uppercase text-muted mb-0">
+                        Comparativo Ano a Ano (Ano Atual x Ano Anterior)
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filtro-ano-comparativo" class="form-label text-muted small mb-0">
+                            Ano de Referência
+                        </label>
+                        <select id="filtro-ano-comparativo" class="form-select form-select-sm"
+                                style="width:auto;" onchange="atualizarGraficoComparativo()">
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container" style="height:45vh">
+                    <canvas id="graficoComparativo"></canvas>
+                </div>
+            </div>
+
+            <!-- Mesmo Mês em Todos os Anos – Evolução % -->
+            <div class="card p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title text-uppercase text-muted mb-0">
+                        Mesmo Mês em Todos os Anos – Evolução %
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="filtro-mes-mesmo" class="form-label text-muted small mb-0">
+                            Mês
+                        </label>
+                        <select id="filtro-mes-mesmo" class="form-select form-select-sm"
+                                style="width:auto;" onchange="atualizarGraficoMesmoMes()">
+                            <option value="1">Janeiro</option>
+                            <option value="2">Fevereiro</option>
+                            <option value="3">Março</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Maio</option>
+                            <option value="6">Junho</option>
+                            <option value="7">Julho</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container" style="height:45vh">
+                    <canvas id="graficoMesmoMes"></canvas>
+                </div>
+            </div>
+
+            <!-- Acumulado Ano Atual vs Anos Anteriores (Mesmo Período) -->
+<div class="card p-4 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title text-uppercase text-muted mb-0">
+            Acumulado do Ano Atual vs Mesmos Períodos (Anos Anteriores)
+        </h5>
+        <div class="d-flex align-items-center gap-2">
+            <label for="filtro-mes-ate" class="form-label text-muted small mb-0">
+                Janeiro até
+            </label>
+            <select id="filtro-mes-ate" class="form-select form-select-sm"
+                    style="width:auto;" onchange="atualizarGraficoAcumuladoPeriodo()">
+                <option value="1">Janeiro</option>
+                <option value="2" selected>Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+            </select>
+        </div>
+    </div>
+    <div class="chart-container" style="height:45vh">
+        <canvas id="graficoAcumuladoPeriodo"></canvas>
+    </div>
+</div>
+
+            <!-- Evolução Anual de Vendas -->
+            <div class="card p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title text-uppercase text-muted mb-0">
+                        Evolução Anual de Vendas
+                    </h5>
+                    <span class="text-muted small">Variação % ano a ano</span>
+                </div>
+                <div class="chart-container" style="height:45vh">
+                    <canvas id="graficoEvolucaoAnual"></canvas>
+                </div>
+            </div>
+
+            <!-- Ranking de Rotas -->
+            <div class="card p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title text-uppercase text-muted mb-0">
+                        Participação por Rota
+                    </h5>
+                    <span class="text-muted small">Top 10</span>
+                </div>
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="chart-container" style="height:50vh">
+                            <canvas id="graficoRankingRotas"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <h6 class="text-white mb-3" style="font-size: 0.85rem; text-transform: uppercase; color: #888;">Detalhamento</h6>
+                        <div id="lista-ranking-rotas" class="rota-lista">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ... todo o JavaScript permanece igual ...
+        let meuGraficoInstancia = null;
+        let graficoComparativoInstancia = null;
+        let graficoMesmoMesInstancia = null;
+        let graficoRankingRotasInstancia = null;
+        let dadosGlobaisAba = [];
+        let anosDisponiveis = [];
+        let datePicker = null;
+        let periodoAtual = { inicio: null, fim: null, tipo: 'este-mes' };
+        let graficoEvolucaoAnualInstancia = null;
+        let graficoAcumuladoPeriodoInstancia = null;
+
+        const coresModernas = [
+            '#06B6D4', '#3B82F6', '#10B981', '#F59E0B', '#6366F1',
+            '#84CC16', '#EC4899', '#F97316', '#8B5CF6', '#0EA5E9'
+        ];
+
+        const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        // 1. Inicialização
+        async function carregarAba(endpoint) {
+            document.getElementById('card-vendas').innerText = 'Carregando...';
+            document.getElementById('card-media-vendas').innerText = 'Carregando...';
+            document.getElementById('card-positivacoes').innerText = 'Carregando...';
+
+            try {
+                const response = await fetch(`/api/${endpoint}`);
+                dadosGlobaisAba = await response.json();
+
+                if (dadosGlobaisAba.erro) {
+                    alert("Erro ao carregar os dados. Verifique o Excel.");
+                    return;
+                }
+
+                anosDisponiveis = [...new Set(dadosGlobaisAba.map(item => item['Ano']))].sort();
+                const minAno = Math.min(...anosDisponiveis);
+                const maxAno = Math.max(...anosDisponiveis);
+                
+                const slider = document.getElementById('ano-slider');
+                slider.min = minAno;
+                slider.max = maxAno;
+                slider.value = maxAno;
+                document.getElementById('ano-display').textContent = maxAno;
+
+                preencherSelectRotas();
+                inicializarDatePicker();
+                selecionarPeriodoRapido('tudo');
+
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+            }
+        }
+
+        // 2. Date Picker com Flatpickr
+        function inicializarDatePicker() {
+            const anoAtual = new Date().getFullYear();
+            const anosRange = [];
+            for (let a = 2020; a <= anoAtual + 1; a++) {
+                anosRange.push(a);
+            }
+            
+            const mesesAbrev = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+            datePicker = flatpickr("#date-range-picker", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                locale: "pt",
+                theme: "dark",
+                maxDate: "today",
+                showMonths: 2,
+                
+                onReady: function(selectedDates, dateStr, instance) {
+                    const seletoresContainer = document.createElement('div');
+                    seletoresContainer.className = 'flatpickr-seletores-rapidos';
+                    seletoresContainer.style.cssText = 'display: flex; gap: 8px; padding: 8px 12px; background: #1e1e2f; border-bottom: 1px solid #344675;';
+                    
+                    const selectAnoInicio = document.createElement('select');
+                    selectAnoInicio.className = 'flatpickr-ano-select';
+                    selectAnoInicio.style.cssText = 'background: #27293d; color: #fff; border: 1px solid #344675; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer;';
+                    anosRange.forEach(ano => {
+                        const opt = document.createElement('option');
+                        opt.value = ano;
+                        opt.textContent = ano;
+                        selectAnoInicio.appendChild(opt);
+                    });
+                    selectAnoInicio.value = instance.currentMonth < 6 ? anosRange[0] : anoAtual;
+                    
+                    const selectMesInicio = document.createElement('select');
+                    selectMesInicio.className = 'flatpickr-mes-select';
+                    selectMesInicio.style.cssText = 'background: #27293d; color: #fff; border: 1px solid #344675; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer;';
+                    mesesAbrev.forEach((mes, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.textContent = mes;
+                        selectMesInicio.appendChild(opt);
+                    });
+                    
+                    const labelAte = document.createElement('span');
+                    labelAte.textContent = '→';
+                    labelAte.style.cssText = 'color: #888; display: flex; align-items: center;';
+                    
+                    const selectAnoFim = document.createElement('select');
+                    selectAnoFim.className = 'flatpickr-ano-select';
+                    selectAnoFim.style.cssText = 'background: #27293d; color: #fff; border: 1px solid #344675; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer;';
+                    anosRange.forEach(ano => {
+                        const opt = document.createElement('option');
+                        opt.value = ano;
+                        opt.textContent = ano;
+                        selectAnoFim.appendChild(opt);
+                    });
+                    selectAnoFim.value = anoAtual;
+                    
+                    const selectMesFim = document.createElement('select');
+                    selectMesFim.className = 'flatpickr-mes-select';
+                    selectMesFim.style.cssText = 'background: #27293d; color: #fff; border: 1px solid #344675; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer;';
+                    mesesAbrev.forEach((mes, idx) => {
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.textContent = mes;
+                        selectMesFim.appendChild(opt);
+                    });
+                    selectMesFim.value = new Date().getMonth();
+                    
+                    const btnAplicar = document.createElement('button');
+                    btnAplicar.textContent = 'Aplicar';
+                    btnAplicar.style.cssText = 'background: linear-gradient(135deg, #e14eca 0%, #a855f7 100%); color: #fff; border: none; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: 500; cursor: pointer; margin-left: auto;';
+                    
+                    function atualizarCalendario() {
+                        const anoIni = parseInt(selectAnoInicio.value);
+                        const mesIni = parseInt(selectMesInicio.value);
+                        const anoFim = parseInt(selectAnoFim.value);
+                        const mesFim = parseInt(selectMesFim.value);
+                        
+                        instance.jumpToDate(new Date(anoIni, mesIni, 1), false);
+                        
+                        const dataInicio = new Date(anoIni, mesIni, 1);
+                        const dataFim = new Date(anoFim, mesFim + 1, 0);
+                        instance.setDate([dataInicio, dataFim], false);
+                    }
+                    
+                    selectAnoInicio.addEventListener('change', atualizarCalendario);
+                    selectMesInicio.addEventListener('change', atualizarCalendario);
+                    selectAnoFim.addEventListener('change', atualizarCalendario);
+                    selectMesFim.addEventListener('change', atualizarCalendario);
+                    
+                    btnAplicar.addEventListener('click', () => {
+                        atualizarCalendario();
+                        instance.close();
+                        
+                        const anoIni = parseInt(selectAnoInicio.value);
+                        const mesIni = parseInt(selectMesInicio.value);
+                        const anoFim = parseInt(selectAnoFim.value);
+                        const mesFim = parseInt(selectMesFim.value);
+                        
+                        const dataInicio = new Date(anoIni, mesIni, 1);
+                        const dataFim = new Date(anoFim, mesFim + 1, 0);
+                        
+                        periodoAtual.inicio = dataInicio;
+                        periodoAtual.fim = dataFim;
+                        periodoAtual.tipo = 'personalizado';
+                        atualizarDisplayPeriodo();
+                        atualizarBotoesAtivo('personalizado');
+                        aplicarFiltros();
+                    });
+                    
+                    seletoresContainer.appendChild(selectAnoInicio);
+                    seletoresContainer.appendChild(selectMesInicio);
+                    seletoresContainer.appendChild(labelAte);
+                    seletoresContainer.appendChild(selectAnoFim);
+                    seletoresContainer.appendChild(selectMesFim);
+                    seletoresContainer.appendChild(btnAplicar);
+                    
+                    const calendarContainer = instance.calendarContainer;
+                    calendarContainer.insertBefore(seletoresContainer, calendarContainer.firstChild);
+                },
+                
+                onChange: function(selectedDates) {
+                    if (selectedDates.length === 2) {
+                        periodoAtual.inicio = selectedDates[0];
+                        periodoAtual.fim = selectedDates[1];
+                        periodoAtual.tipo = 'personalizado';
+                        atualizarDisplayPeriodo();
+                        atualizarBotoesAtivo('personalizado');
+                        aplicarFiltros();
+                    }
+                }
+            });
+        }
+
+        function abrirDatePicker() {
+            if (datePicker) {
+                datePicker.open();
+            }
+        }
+
+        // 3. Seleção de período rápido
+        function selecionarPeriodoRapido(tipo) {
+            const hoje = new Date();
+            const anoAtual = hoje.getFullYear();
+            const mesAtual = hoje.getMonth();
+            
+            periodoAtual.tipo = tipo;
+
+            switch(tipo) {
+                case 'este-mes':
+                    periodoAtual.inicio = new Date(anoAtual, mesAtual, 1);
+                    periodoAtual.fim = new Date(anoAtual, mesAtual + 1, 0);
+                    break;
+                    
+                case 'mes-anterior':
+                    periodoAtual.inicio = new Date(anoAtual, mesAtual - 1, 1);
+                    periodoAtual.fim = new Date(anoAtual, mesAtual, 0);
+                    break;
+                    
+                case 'ultimos-3-meses':
+                    periodoAtual.inicio = new Date(anoAtual, mesAtual - 2, 1);
+                    periodoAtual.fim = new Date(anoAtual, mesAtual + 1, 0);
+                    break;
+                    
+                case 'este-ano':
+                    periodoAtual.inicio = new Date(anoAtual, 0, 1);
+                    periodoAtual.fim = new Date(anoAtual, 11, 31);
+                    document.getElementById('ano-slider').value = anoAtual;
+                    document.getElementById('ano-display').textContent = anoAtual;
+                    break;
+                    
+                case 'ano-anterior':
+                    periodoAtual.inicio = new Date(anoAtual - 1, 0, 1);
+                    periodoAtual.fim = new Date(anoAtual - 1, 11, 31);
+                    document.getElementById('ano-slider').value = anoAtual - 1;
+                    document.getElementById('ano-display').textContent = anoAtual - 1;
+                    break;
+                    
+                case 'tudo':
+                    const anos = [...new Set(dadosGlobaisAba.map(item => item['Ano']))];
+                    const minAno = Math.min(...anos);
+                    const maxAno = Math.max(...anos);
+                    periodoAtual.inicio = new Date(minAno, 0, 1);
+                    periodoAtual.fim = new Date(maxAno, 11, 31);
+                    break;
+                    
+                case 'personalizado':
+                    abrirDatePicker();
+                    return;
+            }
+
+            atualizarDisplayPeriodo();
+            atualizarBotoesAtivo(tipo);
+            aplicarFiltros();
+        }
+
+        function atualizarAnoSlider(ano) {
+            document.getElementById('ano-display').textContent = ano;
+            periodoAtual.inicio = new Date(parseInt(ano), 0, 1);
+            periodoAtual.fim = new Date(parseInt(ano), 11, 31);
+            periodoAtual.tipo = 'ano-especifico';
+            atualizarDisplayPeriodo();
+            atualizarBotoesAtivo(null);
+            aplicarFiltros();
+        }
+
+        function atualizarDisplayPeriodo() {
+            const { inicio, fim, tipo } = periodoAtual;
+            
+            if (!inicio || !fim) return;
+
+            const formatarDataCurta = (d) => `${d.getDate()}/${d.getMonth()+1}`;
+            const btnData = document.getElementById('texto-data-range');
+            
+            let texto = '';
+            if (tipo === 'este-mes') {
+                texto = 'Este Mês';
+            } else if (tipo === 'mes-anterior') {
+                texto = 'Mês Ant.';
+            } else if (tipo === 'ultimos-3-meses') {
+                texto = '3 Meses';
+            } else if (tipo === 'este-ano') {
+                texto = inicio.getFullYear().toString();
+            } else if (tipo === 'ano-anterior') {
+                texto = inicio.getFullYear().toString();
+            } else if (tipo === 'ano-especifico') {
+                texto = `Ano ${inicio.getFullYear()}`;
+            } else if (tipo === 'tudo') {
+                texto = 'Tudo';
+            } else {
+                texto = `${formatarDataCurta(inicio)} - ${formatarDataCurta(fim)}`;
+            }
+            
+            if (btnData) btnData.textContent = texto;
+
+            const sliderContainer = document.getElementById('ano-slider-container');
+            if (tipo === 'este-ano' || tipo === 'ano-anterior' || tipo === 'ano-especifico') {
+                sliderContainer.style.display = 'flex';
+                document.getElementById('ano-slider').value = inicio.getFullYear();
+                document.getElementById('ano-display').textContent = inicio.getFullYear();
+            } else {
+                sliderContainer.style.display = 'none';
+            }
+        }
+
+        function atualizarBotoesAtivo(tipoAtivo) {
+            document.querySelectorAll('.btn-periodo').forEach(btn => {
+                btn.classList.remove('ativo');
+                if (btn.getAttribute('onclick').includes(`'${tipoAtivo}'`)) {
+                    btn.classList.add('ativo');
+                }
+            });
+        }
+
+        // 4. Rotas
+        function preencherSelectRotas() {
+            const selectRota = document.getElementById('filtro-rota');
+            const rotaSelecionadaAnteriormente = selectRota.value;
+
+            const rotasUnicas = [...new Set(dadosGlobaisAba.map(item => item['Nome Rota']))].sort();
+
+            selectRota.innerHTML = '<option value="TODAS">📍 Todas as Rotas</option>';
+            
+            rotasUnicas.forEach(rota => {
+                if (rota) {
+                    const option = document.createElement('option');
+                    option.value = rota;
+                    option.textContent = rota;
+                    selectRota.appendChild(option);
+                }
+            });
+
+            if (rotasUnicas.includes(rotaSelecionadaAnteriormente)) {
+                selectRota.value = rotaSelecionadaAnteriormente;
+            }
+        }
+
+        // 5. Aplicar filtros
+        function aplicarFiltros() {
+            const rotaFiltro = document.getElementById('filtro-rota').value;
+            const { inicio, fim } = periodoAtual;
+
+            let dadosFiltrados = dadosGlobaisAba;
+
+            if (rotaFiltro !== "TODAS") {
+                dadosFiltrados = dadosFiltrados.filter(item => item['Nome Rota'] === rotaFiltro);
+            }
+
+            if (inicio && fim) {
+                const inicioStr = `${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, '0')}`;
+                const fimStr = `${fim.getFullYear()}-${String(fim.getMonth() + 1).padStart(2, '0')}`;
+
+                dadosFiltrados = dadosFiltrados.filter(item => {
+                    const mesFormatado = String(item['Mês']).padStart(2, '0');
+                    const dataDaLinha = `${item['Ano']}-${mesFormatado}`;
+                    return dataDaLinha >= inicioStr && dataDaLinha <= fimStr;
+                });
+            }
+
+            processarDadosEGerarGrafico(dadosFiltrados);
+        }
+
+        // 6. Processar dados
+        function processarDadosEGerarGrafico(dados) {
+            let totalVendas = 0;
+            let totalPositivacoes = 0;
+            const dadosAgrupadosPorMes = {};
+
+            dados.forEach(linha => {
+                const venda = parseFloat(linha['Total Venda']) || 0;
+                const pos = parseInt(linha['Positivação']) || 0;
+
+                totalVendas += venda;
+                totalPositivacoes += pos;
+
+                const mesFormatado = String(linha['Mês']).padStart(2, '0');
+                const ano = linha['Ano'];
+                const chaveMesAno = `${mesFormatado}/${ano}`;
+                const chaveOrdenacao = `${ano}${mesFormatado}`;
+
+                if (!dadosAgrupadosPorMes[chaveMesAno]) {
+                    dadosAgrupadosPorMes[chaveMesAno] = { venda: 0, pos: 0, sortKey: chaveOrdenacao };
+                }
+
+                dadosAgrupadosPorMes[chaveMesAno].venda += venda;
+                dadosAgrupadosPorMes[chaveMesAno].pos += pos;
+            });
+
+            const mesesOrdenados = Object.keys(dadosAgrupadosPorMes).sort((a, b) => {
+                return dadosAgrupadosPorMes[a].sortKey.localeCompare(dadosAgrupadosPorMes[b].sortKey);
+            });
+            const quantidadeMeses = mesesOrdenados.length || 1;
+
+            const mediaVendas = totalVendas / quantidadeMeses;
+            const mediaPositivacoesMensal = totalPositivacoes / quantidadeMeses;
+
+            document.getElementById('card-vendas').innerText =
+                totalVendas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            document.getElementById('card-media-vendas').innerText =
+                mediaVendas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            document.getElementById('card-positivacoes').innerText =
+                mediaPositivacoesMensal.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+            const arrayVendas = mesesOrdenados.map(mes => dadosAgrupadosPorMes[mes].venda);
+            const arrayPositivacoes = mesesOrdenados.map(mes => dadosAgrupadosPorMes[mes].pos);
+
+            renderizarGrafico(mesesOrdenados, arrayVendas, arrayPositivacoes);
+
+            let baseParaAnos = dadosGlobaisAba;
+            const rotaFiltro = document.getElementById('filtro-rota').value;
+            if (rotaFiltro !== "TODAS") {
+                baseParaAnos = baseParaAnos.filter(item => item['Nome Rota'] === rotaFiltro);
+            }
+
+            anosDisponiveis = [...new Set(baseParaAnos.map(linha => linha['Ano']))].sort();
+
+            const selectAno = document.getElementById('filtro-ano-comparativo');
+            if (selectAno) {
+                const anoAnteriorSelecionado = selectAno.value;
+                selectAno.innerHTML = '';
+
+                anosDisponiveis.forEach(ano => {
+                    const opt = document.createElement('option');
+                    opt.value = ano;
+                    opt.textContent = ano;
+                    selectAno.appendChild(opt);
+                });
+
+                if (anosDisponiveis.includes(parseInt(anoAnteriorSelecionado))) {
+                    selectAno.value = anoAnteriorSelecionado;
+                } else if (anosDisponiveis.length > 0) {
+                    selectAno.value = anosDisponiveis[anosDisponiveis.length - 1];
+                }
+            }
+
+            atualizarGraficoComparativo();
+            atualizarGraficoMesmoMes();
+            atualizarGraficoEvolucaoAnual();
+            atualizarGraficoAcumuladoPeriodo();
+            atualizarRankingRotas(dados);
+        }
+
+        // 7. Gráficos
+        function renderizarGrafico(labels, dadosVendas, dadosPositivacoes) {
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            if (meuGraficoInstancia) meuGraficoInstancia.destroy();
+
+            meuGraficoInstancia = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Vendas (R$)',
+                            data: dadosVendas,
+                            borderColor: '#e14eca',
+                            backgroundColor: 'rgba(225, 78, 202, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            yAxisID: 'y',
+                            fill: true
+                        },
+                        {
+                            label: 'Positivações',
+                            data: dadosPositivacoes,
+                            borderColor: '#00d65f',
+                            borderWidth: 3,
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { 
+                            labels: { 
+                                color: '#ffffff', 
+                                font: { family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif", size: 13 } 
+                            } 
+                        },
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', padding: 10 }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#888' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        y: {
+                            type: 'linear', display: true, position: 'left',
+                            ticks: { color: '#888', callback: value => 'R$ ' + (value / 1000) + 'k' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y1: {
+                            type: 'linear', display: true, position: 'right',
+                            ticks: { color: '#00d65f' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarGraficoComparativo(dadosFiltradosExternos) {
+            let dadosBase = dadosFiltradosExternos;
+            if (!dadosBase) {
+                const rotaFiltro = document.getElementById('filtro-rota').value;
+                dadosBase = dadosGlobaisAba;
+                if (rotaFiltro !== "TODAS") {
+                    dadosBase = dadosBase.filter(item => item['Nome Rota'] === rotaFiltro);
+                }
+            }
+
+            const selectAno = document.getElementById('filtro-ano-comparativo');
+            if (!selectAno || dadosBase.length === 0) return;
+
+            const anoReferencia = parseInt(selectAno.value);
+            const anoAnterior = anoReferencia - 1;
+
+            const agrupado = {};
+            dadosBase.forEach(linha => {
+                const ano = linha['Ano'];
+                const mes = parseInt(linha['Mês']);
+                const venda = parseFloat(linha['Total Venda']) || 0;
+                if (!agrupado[ano]) agrupado[ano] = {};
+                if (!agrupado[ano][mes]) agrupado[ano][mes] = 0;
+                agrupado[ano][mes] += venda;
+            });
+
+            const labelsMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+            const valoresAnoRef = [];
+            const valoresAnoAnt = [];
+            const variacoesPercentuais = [];
+
+            for (let mes = 1; mes <= 12; mes++) {
+                const valorAtual = (agrupado[anoReferencia] && agrupado[anoReferencia][mes]) || 0;
+                const valorAnterior = (agrupado[anoAnterior] && agrupado[anoAnterior][mes]) || 0;
+                valoresAnoRef.push(valorAtual);
+                valoresAnoAnt.push(valorAnterior);
+
+                let variacao;
+                if (valorAnterior > 0) {
+                    variacao = ((valorAtual - valorAnterior) / valorAnterior) * 100;
+                } else if (valorAtual > 0) {
+                    variacao = 100;
+                } else {
+                    variacao = 0;
+                }
+                variacoesPercentuais.push(variacao);
+            }
+
+            renderizarGraficoComparativo(labelsMeses, valoresAnoRef, valoresAnoAnt, variacoesPercentuais, anoReferencia, anoAnterior);
+        }
+
+        function renderizarGraficoComparativo(labels, dadosAnoAtual, dadosAnoAnterior, variacoes, anoAtual, anoAnterior) {
+            const ctx = document.getElementById('graficoComparativo').getContext('2d');
+            if (graficoComparativoInstancia) graficoComparativoInstancia.destroy();
+
+            graficoComparativoInstancia = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: anoAtual.toString(),
+                            data: dadosAnoAtual,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'bar',
+                            label: anoAnterior.toString(),
+                            data: dadosAnoAnterior,
+                            backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            type: 'line',
+                            label: 'Variação (%)',
+                            data: variacoes,
+                            borderColor: '#ff9f40',
+                            backgroundColor: '#ff9f40',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                            pointRadius: 4,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: function(ctx) {
+                                const v = ctx.raw;
+                                if (v > 0) return '#00d65f';
+                                if (v < 0) return '#ff4d4d';
+                                return '#ffcc66';
+                            },
+                            pointBorderColor: '#000',
+                            pointBorderWidth: 1.5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff',
+                                font: { family: "'Helvetica Neue','Helvetica','Arial',sans-serif", size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const valorAtual = dadosAnoAtual[idx] || 0;
+                                    const valorAnt = dadosAnoAnterior[idx] || 0;
+                                    const variacao = variacoes[idx];
+                                    if (context.dataset.type === 'line') {
+                                        const partes = [];
+                                        partes.push(`Variação: ${variacao.toFixed(1)}%`);
+                                        partes.push(`${anoAtual}: ${valorAtual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
+                                        partes.push(`${anoAnterior}: ${valorAnt.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
+                                        return partes;
+                                    }
+                                    return null;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            position: 'left',
+                            ticks: {
+                                color: '#888',
+                                callback: value => 'R$ ' + (value / 1000) + 'k'
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: {
+                                color: '#ff9f40',
+                                callback: value => value + '%'
+                            },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarGraficoMesmoMes() {
+            if (!dadosGlobaisAba || dadosGlobaisAba.length === 0) return;
+            const selectMes = document.getElementById('filtro-mes-mesmo');
+            if (!selectMes) return;
+
+            const mesSelecionado = parseInt(selectMes.value);
+            const rotaFiltro = document.getElementById('filtro-rota').value;
+            let dadosBase = dadosGlobaisAba;
+
+            if (rotaFiltro !== "TODAS") {
+                dadosBase = dadosBase.filter(item => item['Nome Rota'] === rotaFiltro);
+            }
+
+            dadosBase = dadosBase.filter(item => parseInt(item['Mês']) === mesSelecionado);
+            if (dadosBase.length === 0) {
+                renderizarGraficoMesmoMes([], [], [], mesSelecionado);
+                return;
+            }
+
+            const totalPorAno = {};
+            dadosBase.forEach(linha => {
+                const ano = linha['Ano'];
+                const venda = parseFloat(linha['Total Venda']) || 0;
+                if (!totalPorAno[ano]) totalPorAno[ano] = 0;
+                totalPorAno[ano] += venda;
+            });
+
+            const anosOrdenados = Object.keys(totalPorAno).map(a => parseInt(a)).sort((a, b) => a - b);
+            const valoresPorAno = anosOrdenados.map(ano => totalPorAno[ano]);
+
+            const variacoesPercentuais = [];
+            for (let i = 0; i < anosOrdenados.length; i++) {
+                if (i === 0) {
+                    variacoesPercentuais.push(0);
+                } else {
+                    const atual = valoresPorAno[i];
+                    const anterior = valoresPorAno[i - 1];
+                    let variacao = 0;
+                    if (anterior > 0) {
+                        variacao = ((atual - anterior) / anterior) * 100;
+                    }
+                    variacoesPercentuais.push(variacao);
+                }
+            }
+
+            renderizarGraficoMesmoMes(anosOrdenados, valoresPorAno, variacoesPercentuais, mesSelecionado);
+        }
+
+        function renderizarGraficoMesmoMes(anos, valores, variacoes, mesSelecionado) {
+            const canvas = document.getElementById('graficoMesmoMes');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (graficoMesmoMesInstancia) graficoMesmoMesInstancia.destroy();
+
+            const coresBarra = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+            const backgroundColors = anos.map((_, i) => coresBarra[i % coresBarra.length]);
+
+            graficoMesmoMesInstancia = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: anos.map(a => a.toString()),
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Total Vendas',
+                            data: valores,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(c => c),
+                            borderWidth: 1,
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            type: 'line',
+                            label: 'Tendência (%)',
+                            data: variacoes,
+                            borderColor: '#6c5ce7',
+                            backgroundColor: '#6c5ce7',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            pointRadius: 4,
+                            pointHoverRadius: 5,
+                            pointBackgroundColor: function(ctx) {
+                                const v = ctx.raw;
+                                if (v > 0) return '#00d65f';
+                                if (v < 0) return '#ff4d4d';
+                                return '#ffcc66';
+                            },
+                            pointBorderColor: '#000',
+                            pointBorderWidth: 1.2,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff',
+                                font: { family: "'Helvetica Neue','Helvetica','Arial',sans-serif", size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const valor = valores[idx] || 0;
+                                    const variacao = variacoes[idx] || 0;
+                                    if (context.dataset.type === 'line') {
+                                        const partes = [];
+                                        partes.push(`Total: ${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
+                                        if (idx === 0) {
+                                            partes.push('Base: 0.0%');
+                                        } else {
+                                            const sinal = variacao > 0 ? '+' : '';
+                                            partes.push(`Variação vs ${anos[idx - 1]}: ${sinal}${variacao.toFixed(1)}%`);
+                                        }
+                                        return partes;
+                                    }
+                                    return null;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            position: 'left',
+                            ticks: {
+                                color: '#888',
+                                callback: value => 'R$ ' + (value / 1000) + 'k'
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: {
+                                color: '#6c5ce7',
+                                callback: value => value + '%'
+                            },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarGraficoEvolucaoAnual() {
+            if (!dadosGlobaisAba || dadosGlobaisAba.length === 0) return;
+
+            const rotaFiltro = document.getElementById('filtro-rota').value;
+
+            let dadosFiltrados = dadosGlobaisAba;
+            if (rotaFiltro !== "TODAS") {
+                dadosFiltrados = dadosFiltrados.filter(item => item['Nome Rota'] === rotaFiltro);
+            }
+
+            const vendasPorAno = {};
+            
+            dadosFiltrados.forEach(linha => {
+                const ano = linha['Ano'];
+                const venda = parseFloat(linha['Total Venda']) || 0;
+                
+                if (!vendasPorAno[ano]) vendasPorAno[ano] = 0;
+                vendasPorAno[ano] += venda;
+            });
+
+            const anosOrdenados = Object.keys(vendasPorAno)
+                .map(a => parseInt(a))
+                .sort((a, b) => a - b);
+
+            if (anosOrdenados.length === 0) {
+                renderizarGraficoEvolucaoAnual([], [], []);
+                return;
+            }
+
+            const valoresPorAno = anosOrdenados.map(ano => vendasPorAno[ano]);
+
+            const variacoesPercentuais = [];
+            for (let i = 0; i < anosOrdenados.length; i++) {
+                if (i === 0) {
+                    variacoesPercentuais.push(0);
+                } else {
+                    const atual = valoresPorAno[i];
+                    const anterior = valoresPorAno[i - 1];
+                    let variacao = 0;
+                    if (anterior > 0) {
+                        variacao = ((atual - anterior) / anterior) * 100;
+                    } else if (atual > 0) {
+                        variacao = 100;
+                    }
+                    variacoesPercentuais.push(variacao);
+                }
+            }
+
+            renderizarGraficoEvolucaoAnual(anosOrdenados, valoresPorAno, variacoesPercentuais);
+        }
+
+        function renderizarGraficoEvolucaoAnual(anos, valores, variacoes) {
+            const canvas = document.getElementById('graficoEvolucaoAnual');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (graficoEvolucaoAnualInstancia) {
+                graficoEvolucaoAnualInstancia.destroy();
+            }
+
+            const coresBarra = ['#e14eca', '#00d65f', '#ff9f40', '#36a2eb', '#ff6384', '#9966ff', '#4bc0c0', '#ffcd56'];
+            const backgroundColors = anos.map((_, i) => coresBarra[i % coresBarra.length]);
+
+            graficoEvolucaoAnualInstancia = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: anos.map(a => a.toString()),
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Total de Vendas',
+                            data: valores,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(c => c),
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            type: 'line',
+                            label: 'Crescimento (%)',
+                            data: variacoes,
+                            borderColor: '#ff9f40',
+                            backgroundColor: '#ff9f40',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            pointRadius: 5,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: function(ctx) {
+                                const v = ctx.raw;
+                                if (v > 0) return '#00d65f';
+                                if (v < 0) return '#ff4d4d';
+                                return '#ffcc66';
+                            },
+                            pointBorderColor: '#000',
+                            pointBorderWidth: 1.5,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff',
+                                font: { family: "'Helvetica Neue','Helvetica','Arial',sans-serif", size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const valor = valores[idx] || 0;
+                                    const variacao = variacoes[idx] || 0;
+                                    const ano = anos[idx];
+
+                                    if (context.dataset.type === 'line') {
+                                        const partes = [];
+                                        partes.push(`Total ${ano}: ${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
+                                        if (idx === 0) {
+                                            partes.push('Ano base (sem comparação)');
+                                        } else {
+                                            const sinal = variacao > 0 ? '+' : '';
+                                            const corEmoji = variacao > 0 ? '📈' : variacao < 0 ? '📉' : '➡️';
+                                            partes.push(`${corEmoji} Variação vs ${anos[idx - 1]}: ${sinal}${variacao.toFixed(1)}%`);
+                                        }
+                                        return partes;
+                                    }
+                                    return null;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#fff',
+                                font: { size: 12, weight: '500' }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            position: 'left',
+                            ticks: {
+                                color: '#888',
+                                callback: value => 'R$ ' + (value / 1000) + 'k'
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: {
+                                color: '#ff9f40',
+                                callback: value => value + '%'
+                            },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function atualizarRankingRotas(dados) {
+            if (!dados || dados.length === 0) {
+                renderizarRankingRotas([], []);
+                return;
+            }
+
+            const vendasPorRota = {};
+            dados.forEach(linha => {
+                const rota = linha['Nome Rota'] || 'Sem Rota';
+                const venda = parseFloat(linha['Total Venda']) || 0;
+                if (!vendasPorRota[rota]) vendasPorRota[rota] = 0;
+                vendasPorRota[rota] += venda;
+            });
+
+            const rotasOrdenadas = Object.entries(vendasPorRota)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const labels = rotasOrdenadas.map(([rota, _]) => rota);
+            const valores = rotasOrdenadas.map(([_, venda]) => venda);
+
+            renderizarRankingRotas(labels, valores);
+        }
+
+        function renderizarRankingRotas(labels, valores) {
+            const canvas = document.getElementById('graficoRankingRotas');
+            const listaDiv = document.getElementById('lista-ranking-rotas');
+            if (!canvas || !listaDiv) return;
+            const ctx = canvas.getContext('2d');
+            if (graficoRankingRotasInstancia) graficoRankingRotasInstancia.destroy();
+
+            const totalGeral = valores.reduce((a, b) => a + b, 0);
+            const percentuais = valores.map(v => totalGeral > 0 ? (v / totalGeral) * 100 : 0);
+
+            const nomeNaBarraPlugin = {
+                id: 'nomeNaBarra',
+                afterDatasetsDraw(chart, args, options) {
+                    const { ctx, data, chartArea: { left, right }, scales: { x, y } } = chart;
+                    ctx.save();
+                    ctx.font = 'bold 12px "Helvetica Neue", Helvetica, Arial, sans-serif';
+                    ctx.textBaseline = 'middle';
+
+                    data.datasets[0].data.forEach((value, index) => {
+                        const rota = data.labels[index];
+                        const barraX = left;
+                        const barraLargura = x.getPixelForValue(value) - left;
+                        const barraY = y.getPixelForValue(index);
+                        
+                        const textoCor = barraLargura > 120 ? '#ffffff' : '#aaaaaa';
+                        const textoX = barraLargura > 120 ? barraX + 12 : barraX + barraLargura + 8;
+                        
+                        let nomeDisplay = rota;
+                        const maxChars = Math.floor((barraLargura - 20) / 7);
+                        if (barraLargura > 120 && nomeDisplay.length > maxChars) {
+                            nomeDisplay = nomeDisplay.substring(0, maxChars - 2) + '...';
+                        }
+                        
+                        ctx.fillStyle = textoCor;
+                        ctx.fillText(nomeDisplay, textoX, barraY);
+                        
+                        const percentual = value.toFixed(1) + '%';
+                        ctx.font = '11px "Helvetica Neue", Helvetica, Arial, sans-serif';
+                        ctx.fillStyle = '#888888';
+                        const percentualX = right - 5;
+                        ctx.textAlign = 'right';
+                        ctx.fillText(percentual, percentualX, barraY);
+                        ctx.textAlign = 'left';
+                    });
+                    
+                    ctx.restore();
+                }
+            };
+
+            graficoRankingRotasInstancia = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: percentuais,
+                        backgroundColor: labels.map((_, i) => coresModernas[i % coresModernas.length]),
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.75,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: {
+                            display: false,
+                            max: Math.max(...percentuais) * 1.15
+                        },
+                        y: {
+                            display: false
+                        }
+                    },
+                    layout: {
+                        padding: { left: 0, right: 40, top: 10, bottom: 10 }
+                    }
+                },
+                plugins: [nomeNaBarraPlugin]
+            });
+
+            let html = '';
+            labels.forEach((rota, i) => {
+                const valor = valores[i];
+                const percentual = percentuais[i].toFixed(1);
+                const cor = coresModernas[i % coresModernas.length];
+                const rotaDisplay = rota.length > 30 ? rota.substring(0, 27) + '...' : rota;
+                
+                html += `
+                    <div class="rota-item">
+                        <div class="d-flex align-items-center flex-1" style="min-width: 0;">
+                            <span class="rota-cor" style="background: ${cor};"></span>
+                            <span class="rota-nome-lista" title="${rota}">${rotaDisplay}</span>
+                        </div>
+                        <div class="rota-valor-lista">
+                            R$ ${(valor/1000).toFixed(1)}k
+                            <span class="rota-percentual-lista">${percentual}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="mt-3 pt-3 border-top border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted" style="font-size: 0.85rem;">Total Geral</span>
+                        <span class="text-white fw-bold">R$ ${totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                </div>
+            `;
+            
+            listaDiv.innerHTML = html;
+        }
+
+        function atualizarGraficoAcumuladoPeriodo() {
+    if (!dadosGlobaisAba || dadosGlobaisAba.length === 0) return;
+
+    const selectMesAte = document.getElementById('filtro-mes-ate');
+    if (!selectMesAte) return;
+
+    const mesAte = parseInt(selectMesAte.value); // Mês selecionado pelo usuário
+
+    const rotaFiltro = document.getElementById('filtro-rota').value;
+    let dadosBase = dadosGlobaisAba;
+
+    if (rotaFiltro !== "TODAS") {
+        dadosBase = dadosBase.filter(item => item['Nome Rota'] === rotaFiltro);
+    }
+
+    // Filtrar apenas dados de Janeiro até o mês selecionado
+    dadosBase = dadosBase.filter(item => {
+        const mes = parseInt(item['Mês']);
+        return mes >= 1 && mes <= mesAte;
+    });
+
+    if (dadosBase.length === 0) {
+        renderizarGraficoAcumuladoPeriodo([], [], [], mesAte);
+        return;
+    }
+
+    // Agrupar vendas por ano (somando de Janeiro até mesAte)
+    const totalPorAno = {};
+    dadosBase.forEach(linha => {
+        const ano = linha['Ano'];
+        const venda = parseFloat(linha['Total Venda']) || 0;
+        if (!totalPorAno[ano]) totalPorAno[ano] = 0;
+        totalPorAno[ano] += venda;
+    });
+
+    const anosOrdenados = Object.keys(totalPorAno)
+        .map(a => parseInt(a))
+        .sort((a, b) => a - b);
+
+    const valoresPorAno = anosOrdenados.map(ano => totalPorAno[ano]);
+
+    // Calcular variações percentuais
+    const variacoesPercentuais = [];
+    for (let i = 0; i < anosOrdenados.length; i++) {
+        if (i === 0) {
+            variacoesPercentuais.push(0);
+        } else {
+            const atual = valoresPorAno[i];
+            const anterior = valoresPorAno[i - 1];
+            let variacao = 0;
+            if (anterior > 0) {
+                variacao = ((atual - anterior) / anterior) * 100;
+            } else if (atual > 0) {
+                variacao = 100;
+            }
+            variacoesPercentuais.push(variacao);
+        }
+    }
+
+    renderizarGraficoAcumuladoPeriodo(anosOrdenados, valoresPorAno, variacoesPercentuais, mesAte);
+}
+
+function renderizarGraficoAcumuladoPeriodo(anos, valores, variacoes, mesAte) {
+    const canvas = document.getElementById('graficoAcumuladoPeriodo');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (graficoAcumuladoPeriodoInstancia) {
+        graficoAcumuladoPeriodoInstancia.destroy();
+    }
+
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+    const coresBarra = ['#06B6D4', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#84CC16', '#EC4899', '#F97316'];
+    const backgroundColors = anos.map((_, i) => {
+        // Destacar o ano atual
+        const hoje = new Date();
+        if (anos[i] === hoje.getFullYear()) {
+            return '#e14eca'; // Rosa vibrante para ano atual
+        }
+        return coresBarra[i % coresBarra.length];
+    });
+
+    graficoAcumuladoPeriodoInstancia = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: anos.map(a => a.toString()),
+            datasets: [
+                {
+                    type: 'bar',
+                    label: `Acumulado (Jan-${mesesNomes[mesAte - 1].substring(0, 3)})`,
+                    data: valores,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    yAxisID: 'y',
+                    order: 2
+                },
+                {
+                    type: 'line',
+                    label: 'Crescimento (%)',
+                    data: variacoes,
+                    borderColor: '#ff9f40',
+                    backgroundColor: '#ff9f40',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    yAxisID: 'y1',
+                    pointRadius: 6,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: function(ctx) {
+                        const v = ctx.raw;
+                        if (v > 0) return '#00d65f';
+                        if (v < 0) return '#ff4d4d';
+                        return '#ffcc66';
+                    },
+                    pointBorderColor: '#000',
+                    pointBorderWidth: 2,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff',
+                        font: { family: "'Helvetica Neue','Helvetica','Arial',sans-serif", size: 12 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 14,
+                    callbacks: {
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const valor = valores[idx] || 0;
+                            const variacao = variacoes[idx] || 0;
+                            const ano = anos[idx];
+
+                            if (context.dataset.type === 'line') {
+                                const partes = [];
+                                partes.push(`📊 Acumulado ${ano} (Jan-${mesesNomes[mesAte - 1].substring(0, 3)})`);
+                                partes.push(`Total: ${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`);
+                                if (idx === 0) {
+                                    partes.push('Ano base (sem comparação)');
+                                } else {
+                                    const sinal = variacao > 0 ? '+' : '';
+                                    const corEmoji = variacao > 0 ? '📈' : variacao < 0 ? '📉' : '➡️';
+                                    partes.push(`${corEmoji} vs ${anos[idx - 1]}: ${sinal}${variacao.toFixed(1)}%`);
+                                }
+                                return partes;
+                            }
+                            return null;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { 
+                        color: '#fff',
+                        font: { size: 13, weight: '600' }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                },
+                y: {
+                    position: 'left',
+                    ticks: {
+                        color: '#888',
+                        callback: value => 'R$ ' + (value / 1000) + 'k'
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y1: {
+                    position: 'right',
+                    ticks: {
+                        color: '#ff9f40',
+                        callback: value => value + '%'
+                    },
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+}
+
+        window.onload = () => carregarAba('venda-geral');
+        // Verificar sessão e mostrar usuário
+async function verificarSessao() {
+    try {
+        const response = await fetch('/api/session');
+        const data = await response.json();
+        
+        if (!data.autenticado) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        document.getElementById('username').textContent = data.usuario;
+    } catch (err) {
+        console.error('Erro ao verificar sessão:', err);
+    }
+}
+
+// Logout
+async function fazerLogout() {
+    try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login';
+    } catch (err) {
+        console.error('Erro ao fazer logout:', err);
+    }
+}
+
+// Verificar sessão ao carregar
+verificarSessao();
+
+// Verificar periodicamente (a cada 5 minutos)
+setInterval(verificarSessao, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
