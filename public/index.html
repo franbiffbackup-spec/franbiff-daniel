@@ -236,6 +236,78 @@
             padding-top: 380px;
         }
     }
+
+        /* ===== MODAL UPLOAD ===== */
+    .modal-upload .modal-content {
+        background: var(--cor-card);
+        border: 1px solid var(--cor-borda);
+        border-radius: 16px;
+    }
+    .modal-upload .modal-header { border-bottom: 1px solid var(--cor-borda); padding: 20px 24px; }
+    .modal-upload .modal-body { padding: 24px; }
+    .modal-upload .modal-footer { border-top: 1px solid var(--cor-borda); padding: 16px 24px; }
+
+    .planilha-card {
+        background: var(--cor-fundo);
+        border: 2px solid var(--cor-borda);
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    .planilha-card:hover { border-color: var(--cor-acento-principal); }
+    .planilha-card.sucesso { border-color: #10B981; background: rgba(16,185,129,0.05); }
+    .planilha-card.erro { border-color: #EF4444; background: rgba(239,68,68,0.05); }
+    .planilha-card.enviando { border-color: #F59E0B; background: rgba(245,158,11,0.05); }
+
+    .planilha-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--cor-texto-muted);
+        margin-bottom: 4px;
+    }
+    .planilha-nome {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--cor-texto-principal);
+        margin-bottom: 2px;
+    }
+    .planilha-status {
+        font-size: 0.75rem;
+        color: var(--cor-texto-muted);
+        margin-top: 6px;
+        min-height: 18px;
+    }
+    .planilha-icone {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .upload-input { display: none; }
+
+    .btn-upload-header {
+        background: linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(59,130,246,0.15) 100%);
+        border: 1px solid var(--cor-acento-principal);
+        color: var(--cor-acento-principal);
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-upload-header:hover {
+        background: var(--gradiente-acento);
+        color: #fff;
+        border-color: transparent;
+    }
+
 </style>    
 </head>
 <body>
@@ -251,6 +323,9 @@
                 </span>
             </div>
             <div class="d-flex align-items-center gap-3">
+                <button class="btn-upload-header" onclick="abrirModalUpload()" title="Atualizar planilhas">
+                    📤 <span>Atualizar Dados</span>
+                </button>
                 <img src="/logo.png" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
                 <button class="btn btn-sm btn-outline-danger" onclick="fazerLogout()" title="Sair">
                     🚪 Sair
@@ -1812,6 +1887,111 @@ function renderizarGraficoAcumuladoPeriodo(anos, valores, variacoes, mesAte) {
     });
 }
 
+        // ===== UPLOAD DE PLANILHAS =====
+        let modalUploadInstancia = null;
+
+        function abrirModalUpload() {
+            if (!modalUploadInstancia) {
+                modalUploadInstancia = new bootstrap.Modal(document.getElementById('modalUpload'));
+            }
+            // Resetar estados visuais
+            [1, 2, 3].forEach(n => {
+                const card = document.getElementById(`card-upload-${n}`);
+                card.classList.remove('sucesso', 'erro', 'enviando');
+                document.getElementById(`status-${n}`).textContent = 'Clique para selecionar';
+                document.getElementById(`input-${n}`).value = '';
+            });
+            document.getElementById('upload-alerta').style.display = 'none';
+
+            carregarStatusPlanilhas();
+            modalUploadInstancia.show();
+        }
+
+        async function carregarStatusPlanilhas() {
+            const lista = document.getElementById('lista-status-servidor');
+            try {
+                const res = await fetch('/api/status-planilhas');
+                const dados = await res.json();
+
+                const nomes = ['Venda Geral', 'Fatiados Franbiff', 'Suco Prats'];
+                lista.innerHTML = dados.map((d, i) => {
+                    if (!d.existe) {
+                        return `<span class="text-danger me-3">❌ ${d.arquivo}: não encontrado</span>`;
+                    }
+                    const data = new Date(d.modificado);
+                    const formatado = data.toLocaleString('pt-BR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    return `<span class="text-success me-4">✅ <strong>${d.arquivo}</strong> — atualizado em ${formatado}</span>`;
+                }).join('<br>');
+            } catch (e) {
+                lista.innerHTML = '<span class="text-danger">Erro ao verificar arquivos.</span>';
+            }
+        }
+
+        async function fazerUpload(numero, inputEl) {
+            const arquivo = inputEl.files[0];
+            if (!arquivo) return;
+
+            const card = document.getElementById(`card-upload-${numero}`);
+            const status = document.getElementById(`status-${numero}`);
+            const alerta = document.getElementById('upload-alerta');
+
+            // Validar nome
+            const nomeEsperado = `${numero}.xlsx`;
+            if (arquivo.name !== nomeEsperado) {
+                card.classList.remove('sucesso', 'enviando');
+                card.classList.add('erro');
+                status.innerHTML = `<span style="color:#EF4444">⚠️ Nome deve ser <strong>${nomeEsperado}</strong></span>`;
+                mostrarAlerta('danger', `❌ O arquivo deve se chamar exatamente <strong>${nomeEsperado}</strong>. Renomeie e tente novamente.`);
+                inputEl.value = '';
+                return;
+            }
+
+            // Estado: enviando
+            card.classList.remove('sucesso', 'erro');
+            card.classList.add('enviando');
+            status.innerHTML = '⏳ Enviando...';
+            alerta.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('arquivo', arquivo);
+
+            try {
+                const res = await fetch('/api/upload-planilha', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok && data.sucesso) {
+                    card.classList.remove('enviando', 'erro');
+                    card.classList.add('sucesso');
+                    status.innerHTML = `<span style="color:#10B981">✅ Enviado com sucesso!</span>`;
+                    mostrarAlerta('success', `✅ <strong>${arquivo.name}</strong> substituído com sucesso! Recarregue a aba para ver os dados atualizados.`);
+                    carregarStatusPlanilhas();
+                } else {
+                    throw new Error(data.erro || 'Erro desconhecido');
+                }
+            } catch (err) {
+                card.classList.remove('enviando', 'sucesso');
+                card.classList.add('erro');
+                status.innerHTML = `<span style="color:#EF4444">❌ Falha no envio</span>`;
+                mostrarAlerta('danger', `❌ Erro ao enviar <strong>${arquivo.name}</strong>: ${err.message}`);
+            }
+
+            inputEl.value = '';
+        }
+
+        function mostrarAlerta(tipo, mensagem) {
+            const alerta = document.getElementById('upload-alerta');
+            alerta.className = `alert alert-${tipo} mb-3`;
+            alerta.style.display = 'block';
+            alerta.innerHTML = mensagem;
+        }
+
+
         window.onload = () => carregarAba('venda-geral');
         // Verificar sessão e mostrar usuário
 async function verificarSessao() {
@@ -1846,5 +2026,78 @@ verificarSessao();
 // Verificar periodicamente (a cada 5 minutos)
 setInterval(verificarSessao, 5 * 60 * 1000);
     </script>
+
+    <!-- MODAL DE UPLOAD DE PLANILHAS -->
+    <div class="modal fade modal-upload" id="modalUpload" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title mb-1" style="font-weight: 700;">📤 Atualizar Planilhas</h5>
+                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                            Clique em uma planilha para selecionar o arquivo <code>.xlsx</code> e substituir os dados.
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Status geral -->
+                    <div id="upload-alerta" class="alert mb-3" style="display:none; border-radius: 10px; font-size: 0.85rem;"></div>
+
+                    <div class="row g-3">
+                        <!-- Card 1: Venda Geral -->
+                        <div class="col-md-4">
+                            <div class="planilha-card" id="card-upload-1" onclick="document.getElementById('input-1').click()">
+                                <input type="file" class="upload-input" id="input-1" accept=".xlsx" onchange="fazerUpload(1, this)">
+                                <span class="planilha-icone">📊</span>
+                                <div class="planilha-label">Arquivo 1.xlsx</div>
+                                <div class="planilha-nome">Venda Geral</div>
+                                <div class="planilha-status" id="status-1">Clique para selecionar</div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Franbiff -->
+                        <div class="col-md-4">
+                            <div class="planilha-card" id="card-upload-2" onclick="document.getElementById('input-2').click()">
+                                <input type="file" class="upload-input" id="input-2" accept=".xlsx" onchange="fazerUpload(2, this)">
+                                <span class="planilha-icone">🥩</span>
+                                <div class="planilha-label">Arquivo 2.xlsx</div>
+                                <div class="planilha-nome">Fatiados Franbiff</div>
+                                <div class="planilha-status" id="status-2">Clique para selecionar</div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Prats -->
+                        <div class="col-md-4">
+                            <div class="planilha-card" id="card-upload-3" onclick="document.getElementById('input-3').click()">
+                                <input type="file" class="upload-input" id="input-3" accept=".xlsx" onchange="fazerUpload(3, this)">
+                                <span class="planilha-icone">🧃</span>
+                                <div class="planilha-label">Arquivo 3.xlsx</div>
+                                <div class="planilha-nome">Suco Prats</div>
+                                <div class="planilha-status" id="status-3">Clique para selecionar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datas dos arquivos no servidor -->
+                    <div id="info-planilhas" class="mt-4 p-3" style="background: var(--cor-fundo); border-radius: 10px; border: 1px solid var(--cor-borda);">
+                        <div class="text-muted mb-2" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+                            📁 Arquivos no Servidor
+                        </div>
+                        <div id="lista-status-servidor" style="font-size: 0.8rem;">
+                            <span class="text-muted">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="text-muted me-auto" style="font-size: 0.75rem;">
+                        ⚠️ O upload substitui o arquivo atual permanentemente.
+                    </span>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

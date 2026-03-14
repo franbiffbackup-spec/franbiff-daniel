@@ -1,0 +1,16 @@
+{
+  "name": "criar-usuario-e-senha",
+  "version": "1.0.0",
+  "description": "",
+  "main": "gerar-senha.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0"
+  }
+}

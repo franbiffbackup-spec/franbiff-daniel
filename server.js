@@ -4,9 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const xlsx = require('xlsx');
-const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,6 +88,54 @@ app.post('/api/login', async (req, res) => {
     } else {
         res.status(401).json({ erro: 'Credenciais inválidas' });
     }
+});
+
+const multer = require('multer');
+
+// Salva direto na pasta dados/ com o nome original
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, 'dados')),
+    filename: (req, file, cb) => cb(null, file.originalname)
+});
+
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        if (file.originalname.match(/^(1|2|3)\.xlsx$/)) {
+            cb(null, true);
+        } else {
+            cb(new Error(`Nome inválido: ${file.originalname}. Use 1.xlsx, 2.xlsx ou 3.xlsx`));
+        }
+    }
+});
+
+app.post('/api/upload-planilha', upload.single('arquivo'), (req, res) => {
+    if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado.' });
+    res.json({ sucesso: true, arquivo: req.file.originalname });
+});
+
+// Rota para verificar quais arquivos existem e sua data
+app.get('/api/status-planilhas', (req, res) => {
+    const pastaData = path.join(__dirname, 'dados');
+    const arquivos = ['1.xlsx', '2.xlsx', '3.xlsx'];
+    const abas = ['Venda Geral', 'Fatiados Franbiff', 'Suco Prats'];
+
+    const resultado = arquivos.map((arq, i) => {
+        const caminho = path.join(pastaData, arq);
+        try {
+            const stat = fs.statSync(caminho);
+            return {
+                arquivo: arq,
+                aba: abas[i],
+                existe: true,
+                modificado: stat.mtime
+            };
+        } catch {
+            return { arquivo: arq, aba: abas[i], existe: false, modificado: null };
+        }
+    });
+
+    res.json(resultado);
 });
 
 app.get('/api/session', (req, res) => {
